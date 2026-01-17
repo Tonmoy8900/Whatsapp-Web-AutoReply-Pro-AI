@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { ConnectionStatus, LinkedDevice } from '../types';
+import { ConnectionStatus, LinkedDevice, WhatsAppCloudConfig } from '../types';
 
 interface ConnectionScreenProps {
   status: ConnectionStatus;
@@ -10,6 +10,8 @@ interface ConnectionScreenProps {
   linkedDevices: LinkedDevice[];
   showQR: boolean;
   setShowQR: (show: boolean) => void;
+  cloudConfig: WhatsAppCloudConfig;
+  onCloudUpdate: (val: Partial<WhatsAppCloudConfig>) => void;
 }
 
 const ConnectionScreen: React.FC<ConnectionScreenProps> = ({ 
@@ -18,9 +20,12 @@ const ConnectionScreen: React.FC<ConnectionScreenProps> = ({
   onDisconnect, 
   linkedDevices,
   showQR,
-  setShowQR
+  setShowQR,
+  cloudConfig,
+  onCloudUpdate
 }) => {
-  const [qrValue, setQrValue] = useState(`wa-link-${Math.random().toString(36).substr(2, 9)}`);
+  const [activeMode, setActiveMode] = useState<'web' | 'cloud'>(cloudConfig.isEnabled ? 'cloud' : 'web');
+  const [qrValue] = useState(`wa-link-${Math.random().toString(36).substr(2, 9)}`);
   const [customDeviceName, setCustomDeviceName] = useState('My Browser');
 
   useEffect(() => {
@@ -43,152 +48,133 @@ const ConnectionScreen: React.FC<ConnectionScreenProps> = ({
     }
   };
 
-  // If we are currently scanning or disconnected and want to link
-  if (showQR || status === 'disconnected' || status === 'connecting') {
-    return (
-      <div className="bg-white overflow-hidden rounded-3xl shadow-sm border border-gray-100 flex flex-col items-center animate-fade-in">
-        <div className="w-full bg-[#008069] text-white px-8 py-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-             {status === 'connected' && (
-               <button onClick={() => setShowQR(false)} className="hover:bg-black/10 p-2 rounded-full transition-colors">
-                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-               </button>
-             )}
-             <h2 className="text-xl font-medium">Link a device</h2>
-          </div>
-        </div>
+  return (
+    <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
+      {/* Mode Toggle */}
+      <div className="flex bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100">
+        <button 
+          onClick={() => { setActiveMode('web'); onCloudUpdate({ isEnabled: false }); }}
+          className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${activeMode === 'web' ? 'bg-[#008069] text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
+        >
+          WhatsApp Web (Legacy)
+        </button>
+        <button 
+          onClick={() => { setActiveMode('cloud'); onCloudUpdate({ isEnabled: true }); }}
+          className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${activeMode === 'cloud' ? 'bg-[#008069] text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
+        >
+          WhatsApp Cloud API (Official)
+        </button>
+      </div>
 
-        <div className="p-10 flex flex-col items-center w-full">
-          <div className="flex flex-col md:flex-row gap-12 items-center w-full max-w-4xl justify-center">
-            <div className="space-y-8 max-w-sm order-2 md:order-1">
-              <div className="space-y-2">
-                <h3 className="text-2xl font-light text-gray-700">Use AutoReply Pro on WhatsApp</h3>
-                <p className="text-gray-500 text-sm">Open WhatsApp on your phone to scan the code</p>
-              </div>
-              
-              <ol className="space-y-4 text-sm text-gray-600 list-decimal list-inside marker:font-bold">
-                <li>Open WhatsApp on your phone</li>
-                <li>Tap <b>Menu</b> or <b>Settings</b> and select <b>Linked Devices</b></li>
-                <li>Tap on <b>Link a Device</b></li>
-                <li>Point your phone to this screen to capture the code</li>
-              </ol>
+      {activeMode === 'cloud' ? (
+        <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 space-y-8 animate-fade-in">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-black text-gray-800">Business Cloud API</h2>
+              <p className="text-gray-400 text-sm">Official Meta Enterprise connection.</p>
             </div>
+            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${cloudConfig.accessToken ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
+              {cloudConfig.accessToken ? 'Active Status' : 'Needs Config'}
+            </div>
+          </div>
 
-            <div className="flex flex-col items-center gap-6 order-1 md:order-2">
-              <div className="w-full max-w-[240px]">
-                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">Device Name</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Permanent Access Token</label>
                 <input 
-                  type="text" 
-                  value={customDeviceName}
-                  onChange={(e) => setCustomDeviceName(e.target.value)}
-                  placeholder="e.g. My Chrome Browser"
-                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#25D366] transition-colors"
-                  disabled={status === 'connecting'}
+                  type="password" 
+                  value={cloudConfig.accessToken}
+                  onChange={(e) => onCloudUpdate({ accessToken: e.target.value })}
+                  placeholder="EAAB..."
+                  className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:border-[#008069] transition-all text-sm font-mono"
                 />
               </div>
-
-              <div className="relative p-8 bg-white rounded-xl shadow-xl border border-gray-50">
-                {status === 'connecting' && <div className="scan-line"></div>}
-                <div className={`transition-all duration-500 ${status === 'connecting' ? 'scale-95 opacity-50 blur-[2px]' : 'scale-100'}`}>
-                  <QRCodeSVG 
-                    value={qrValue} 
-                    size={240} 
-                    fgColor="#1c1e21" 
-                    level="H"
-                    includeMargin={false}
-                  />
-                </div>
-                {status === 'connecting' && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-white/90 p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col items-center gap-3">
-                       <div className="w-10 h-10 border-4 border-[#25D366] border-t-transparent rounded-full animate-spin"></div>
-                       <span className="font-bold text-gray-800">Connecting...</span>
-                    </div>
-                  </div>
-                )}
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Phone Number ID</label>
+                <input 
+                  type="text" 
+                  value={cloudConfig.phoneNumberId}
+                  onChange={(e) => onCloudUpdate({ phoneNumberId: e.target.value })}
+                  placeholder="e.g. 1045920..."
+                  className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:border-[#008069] transition-all text-sm"
+                />
               </div>
+            </div>
+            <div className="bg-blue-50 rounded-[1.5rem] p-6 border border-blue-100">
+               <h4 className="font-bold text-blue-800 text-sm mb-2 flex items-center gap-2">
+                 <span>ℹ️</span> How to get these?
+               </h4>
+               <ul className="text-[11px] text-blue-600 space-y-3 leading-relaxed">
+                 <li>1. Create an app at <b>developers.facebook.com</b></li>
+                 <li>2. Add <b>WhatsApp</b> product to your app.</li>
+                 <li>3. Navigate to <b>API Setup</b> in the sidebar.</li>
+                 <li>4. Copy your Temporary/Permanent Token and Phone ID.</li>
+               </ul>
             </div>
           </div>
 
-          {status !== 'connecting' && (
-            <div className="mt-12 w-full max-w-sm">
-              <button 
-                onClick={() => onConnect(customDeviceName)}
-                className="w-full py-4 bg-[#008069] hover:bg-[#00a884] text-white rounded-lg font-bold shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-3"
-              >
-                Simulate QR Scan
-              </button>
+          <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center gap-3">
+             <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">🚀</div>
+             <p className="text-[11px] text-gray-500 font-medium">Cloud API enables 100% reliable auto-replies even when this browser tab is closed.</p>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden animate-fade-in">
+          {status === 'connected' && !showQR ? (
+            <div className="p-8">
+               <div className="flex flex-col items-center text-center mb-8">
+                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-3xl mb-4 shadow-inner">💻</div>
+                  <h3 className="text-xl font-bold text-gray-800">Linked Web Session</h3>
+                  <button onClick={() => setShowQR(true)} className="mt-4 text-[#008069] font-bold text-xs hover:underline">Link New Device</button>
+               </div>
+               <div className="space-y-3">
+                 {linkedDevices.map(device => (
+                   <div key={device.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 group">
+                     <div className="flex items-center gap-3">
+                        <span className="text-xl">{getIcon(device.platform)}</span>
+                        <div>
+                          <p className="font-bold text-sm text-gray-800">{device.name}</p>
+                          <p className="text-[9px] text-gray-400 uppercase tracking-widest">Active • {device.location}</p>
+                        </div>
+                     </div>
+                     <button onClick={() => onDisconnect(device.id)} className="text-xs font-bold text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">Logout</button>
+                   </div>
+                 ))}
+               </div>
+            </div>
+          ) : (
+            <div className="p-10 flex flex-col items-center">
+               <div className="flex flex-col md:flex-row gap-12 items-center justify-center w-full">
+                  <div className="space-y-6 max-w-sm">
+                    <h3 className="text-2xl font-light text-gray-700">Scan for Instant Link</h3>
+                    <ol className="space-y-3 text-sm text-gray-500 list-decimal list-inside">
+                      <li>Open WhatsApp on your phone</li>
+                      <li>Go to <b>Linked Devices</b> in Settings</li>
+                      <li>Point camera to this screen</li>
+                    </ol>
+                    <input 
+                      type="text" 
+                      value={customDeviceName}
+                      onChange={(e) => setCustomDeviceName(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none"
+                    />
+                  </div>
+                  <div className="relative p-6 bg-white rounded-2xl shadow-2xl border border-gray-100">
+                    {status === 'connecting' && <div className="scan-line"></div>}
+                    <div className={status === 'connecting' ? 'opacity-30 blur-sm' : ''}>
+                      <QRCodeSVG value={qrValue} size={200} />
+                    </div>
+                    {status === 'connecting' && <div className="absolute inset-0 flex items-center justify-center font-bold text-[#008069]">Syncing...</div>}
+                  </div>
+               </div>
+               <button onClick={() => onConnect(customDeviceName)} className="mt-10 bg-[#008069] text-white px-10 py-3.5 rounded-2xl font-black text-sm shadow-xl active:scale-95 transition-all">
+                  Simulate Web Scan
+               </button>
             </div>
           )}
         </div>
-      </div>
-    );
-  }
-
-  // Management Screen (Status is connected)
-  return (
-    <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-8 border-b border-gray-50 flex flex-col items-center text-center">
-          <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-4xl mb-6 shadow-inner border border-gray-100">
-            💻
-          </div>
-          <h2 className="text-2xl font-bold text-gray-800">Linked devices</h2>
-          <p className="text-gray-500 text-sm mt-2 max-w-md">
-            Use AutoReply Pro on other devices without keeping your phone online.
-          </p>
-          <button 
-            onClick={() => setShowQR(true)}
-            className="mt-8 bg-[#008069] text-white px-8 py-3 rounded-full font-bold hover:bg-[#00a884] transition-all shadow-lg shadow-[#008069]/20"
-          >
-            Link a device
-          </button>
-        </div>
-
-        <div className="bg-gray-50/50 p-6">
-          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-2">Device Status</h3>
-          <div className="space-y-3">
-            {linkedDevices.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-4">No active sessions found.</p>
-            ) : (
-              linkedDevices.map((device) => (
-                <div key={device.id} className="bg-white p-5 rounded-2xl border border-gray-100 flex items-center justify-between group hover:border-[#008069]/30 transition-all">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                      {getIcon(device.platform)}
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-800">{device.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="w-1.5 h-1.5 bg-[#25D366] rounded-full"></span>
-                        <p className="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">
-                          Active • {device.location} • {new Date(device.lastActive).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => onDisconnect(device.id)}
-                    className="opacity-0 group-hover:opacity-100 bg-red-50 text-red-500 text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-500 hover:text-white transition-all"
-                  >
-                    Log out
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white p-6 rounded-3xl border border-gray-100 flex items-center gap-4">
-        <div className="w-10 h-10 bg-yellow-50 text-yellow-600 rounded-full flex items-center justify-center text-xl shrink-0">
-          🔒
-        </div>
-        <div>
-          <p className="text-xs font-bold text-gray-800">End-to-end encrypted</p>
-          <p className="text-[10px] text-gray-400">Your personal messages are end-to-end encrypted on all your devices.</p>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

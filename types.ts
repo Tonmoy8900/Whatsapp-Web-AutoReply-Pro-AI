@@ -6,6 +6,13 @@ export enum ReplyType {
   URGENT = 'Urgent'
 }
 
+export interface WhatsAppCloudConfig {
+  accessToken: string;
+  phoneNumberId: string;
+  wabaId: string;
+  isEnabled: boolean;
+}
+
 export interface GeneratorConfig {
   companyName: string;
   workingHours: string;
@@ -13,6 +20,7 @@ export interface GeneratorConfig {
   context: string;
   replyType: ReplyType;
   includeContactInfo: boolean;
+  whatsappApi?: WhatsAppCloudConfig;
 }
 
 export interface SavedReply {
@@ -22,7 +30,7 @@ export interface SavedReply {
   config: GeneratorConfig;
 }
 
-export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
+export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'api_active';
 
 export interface LinkedDevice {
   id: string;
@@ -38,4 +46,5 @@ export interface ActivityLog {
   incomingMessage: string;
   outboundReply: string;
   timestamp: number;
+  via: 'Simulation' | 'Cloud API';
 }
