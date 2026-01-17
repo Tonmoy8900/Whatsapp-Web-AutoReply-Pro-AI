@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { generateWhatsAppReply, generateDynamicWhatsAppReply } from './services/geminiService';
-import { GeneratorConfig, ReplyType, ConnectionStatus, ActivityLog, LinkedDevice } from './types';
-import PhonePreview from './components/PhonePreview';
-import ConnectionScreen from './components/ConnectionScreen';
+import { generateWhatsAppReply, generateDynamicWhatsAppReply } from './services/geminiService.ts';
+import { GeneratorConfig, ReplyType, ConnectionStatus, ActivityLog, LinkedDevice } from './types.ts';
+import PhonePreview from './components/PhonePreview.tsx';
+import ConnectionScreen from './components/ConnectionScreen.tsx';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'generator' | 'connection' | 'monitor'>('generator');
@@ -13,6 +13,7 @@ const App: React.FC = () => {
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [isSimulating, setIsSimulating] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
+  const [isApiKeyMissing, setIsApiKeyMissing] = useState(false);
 
   const [config, setConfig] = useState<GeneratorConfig>({
     companyName: 'Acme Business Solutions',
@@ -27,8 +28,12 @@ const App: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Check for API Key on mount
   useEffect(() => {
-    if (!generatedMessage && config.companyName) {
+    const key = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
+    if (!key) {
+      setIsApiKeyMissing(true);
+    } else {
       handleGenerate();
     }
   }, []);
@@ -40,7 +45,11 @@ const App: React.FC = () => {
       const result = await generateWhatsAppReply(config);
       setGeneratedMessage(result);
     } catch (err: any) {
-      setError(err.message);
+      if (err.message === 'API_KEY_MISSING') {
+        setIsApiKeyMissing(true);
+      } else {
+        setError(err.message);
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -130,6 +139,57 @@ const App: React.FC = () => {
     }
     return () => clearInterval(interval);
   }, [isSimulating, connectionStatus, config]);
+
+  // Render Setup Assistant if API key is missing
+  if (isApiKeyMissing) {
+    return (
+      <div className="min-h-screen bg-[#f0f2f5] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden animate-fade-in border border-gray-100">
+          <div className="bg-[#075e54] p-8 text-white text-center">
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+            </div>
+            <h2 className="text-2xl font-black tracking-tight">Setup Required</h2>
+            <p className="text-white/70 text-sm mt-2">To start the AI Engine, you must connect your Gemini API Key.</p>
+          </div>
+          <div className="p-8 space-y-6">
+            <div className="space-y-4">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <span className="w-6 h-6 bg-green-100 text-[#075e54] rounded-full flex items-center justify-center text-xs">1</span>
+                Deploy to Vercel/Netlify
+              </h3>
+              <p className="text-xs text-gray-500 pl-8 leading-relaxed">Ensure you have pushed this code to a GitHub repository and connected it to a cloud provider like Vercel.</p>
+            </div>
+            <div className="space-y-4">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <span className="w-6 h-6 bg-green-100 text-[#075e54] rounded-full flex items-center justify-center text-xs">2</span>
+                Set Environment Variables
+              </h3>
+              <p className="text-xs text-gray-500 pl-8 leading-relaxed">In your Project Dashboard, go to <b>Settings > Environment Variables</b> and add a new entry:</p>
+              <div className="ml-8 bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center justify-between group">
+                <code className="text-[11px] font-black text-gray-700">API_KEY = "YOUR_GEMINI_KEY"</code>
+                <button onClick={() => { navigator.clipboard.writeText('API_KEY'); alert('Key name copied!'); }} className="text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">Copy Name</button>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <span className="w-6 h-6 bg-green-100 text-[#075e54] rounded-full flex items-center justify-center text-xs">3</span>
+                Redeploy
+              </h3>
+              <p className="text-xs text-gray-500 pl-8 leading-relaxed">Save the variable and redeploy the app. The AI will activate automatically.</p>
+            </div>
+            <button 
+              onClick={() => window.location.reload()}
+              className="w-full bg-[#128c7e] text-white py-4 rounded-2xl font-black text-sm shadow-xl hover:bg-[#075e54] transition-all active:scale-95 mt-4"
+            >
+              I've added the Key, Refresh App
+            </button>
+            <p className="text-center text-[10px] text-gray-400 font-medium">Developed by Tonmoy (Bumba)</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f0f2f5] flex flex-col font-sans selection:bg-[#25D366]/30">

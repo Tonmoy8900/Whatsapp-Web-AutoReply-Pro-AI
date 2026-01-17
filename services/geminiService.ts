@@ -1,12 +1,12 @@
 
 import { GoogleGenAI } from "@google/genai";
-import { GeneratorConfig, ReplyType } from "../types";
+import { GeneratorConfig, ReplyType } from "../types.ts";
 
 const getAIInstance = () => {
   // Safe access to process.env
   const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
   
-  if (!apiKey) {
+  if (!apiKey || apiKey === "UNDEFINED" || apiKey === "") {
     throw new Error("API_KEY_MISSING");
   }
   return new GoogleGenAI({ apiKey });
@@ -20,7 +20,7 @@ const handleGeminiError = (error: any): string => {
   
   const msg = error.message || "";
   if (msg === "API_KEY_MISSING") {
-    return "API Key is missing. Please set your Gemini API Key in the deployment environment variables.";
+    return "API_KEY_MISSING";
   }
   
   const lowerMsg = msg.toLowerCase();
@@ -63,7 +63,9 @@ export const generateWhatsAppReply = async (config: GeneratorConfig): Promise<st
     
     return response.text || "Hello! We've received your message and will get back to you soon.";
   } catch (error) {
-    throw new Error(handleGeminiError(error));
+    const handledMsg = handleGeminiError(error);
+    if (handledMsg === "API_KEY_MISSING") throw new Error("API_KEY_MISSING");
+    throw new Error(handledMsg);
   }
 };
 
@@ -101,6 +103,8 @@ export const generateDynamicWhatsAppReply = async (incomingMessage: string, conf
 
     return response.text || "I've noted your specific question. Our team will review this and get back to you during our standard business hours.";
   } catch (error) {
-    return handleGeminiError(error);
+    const handled = handleGeminiError(error);
+    if (handled === "API_KEY_MISSING") return "Error: Gemini API Key is missing. Connect it in settings.";
+    return handled;
   }
 };
