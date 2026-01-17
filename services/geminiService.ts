@@ -3,7 +3,9 @@ import { GoogleGenAI } from "@google/genai";
 import { GeneratorConfig, ReplyType } from "../types";
 
 const getAIInstance = () => {
-  const apiKey = process.env.API_KEY;
+  // Safe access to process.env
+  const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
+  
   if (!apiKey) {
     throw new Error("API_KEY_MISSING");
   }
@@ -16,21 +18,22 @@ const getAIInstance = () => {
 const handleGeminiError = (error: any): string => {
   console.error("Gemini API Error Detail:", error);
   
-  if (error.message === "API_KEY_MISSING") {
-    return "The application is missing its security key. Please contact support.";
+  const msg = error.message || "";
+  if (msg === "API_KEY_MISSING") {
+    return "API Key is missing. Please set your Gemini API Key in the deployment environment variables.";
   }
   
-  const msg = error.message?.toLowerCase() || "";
-  if (msg.includes("api key not valid") || msg.includes("invalid api key")) {
+  const lowerMsg = msg.toLowerCase();
+  if (lowerMsg.includes("api key not valid") || lowerMsg.includes("invalid api key")) {
     return "The AI service key is invalid. Please check your configuration.";
   }
-  if (msg.includes("quota") || msg.includes("429")) {
+  if (lowerMsg.includes("quota") || lowerMsg.includes("429")) {
     return "The AI is currently receiving too many requests. Please wait a moment and try again.";
   }
-  if (msg.includes("safety") || msg.includes("blocked")) {
+  if (lowerMsg.includes("safety") || lowerMsg.includes("blocked")) {
     return "The message was flagged by the safety filter. Try rephrasing your input.";
   }
-  if (msg.includes("network") || msg.includes("fetch")) {
+  if (lowerMsg.includes("network") || lowerMsg.includes("fetch")) {
     return "Network connection issue. Please check your internet and try again.";
   }
   
@@ -98,7 +101,6 @@ export const generateDynamicWhatsAppReply = async (incomingMessage: string, conf
 
     return response.text || "I've noted your specific question. Our team will review this and get back to you during our standard business hours.";
   } catch (error) {
-    // We return a string instead of throwing to keep the monitor running smoothly
     return handleGeminiError(error);
   }
 };

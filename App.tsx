@@ -220,7 +220,19 @@ const App: React.FC = () => {
         )}
 
         {activeTab === 'connection' && (
-          <div className="animate-fade-in pb-12">
+          <div className="animate-fade-in pb-12 space-y-6">
+            <div className="bg-[#075e54] text-white p-6 rounded-3xl shadow-lg flex items-center justify-between border border-white/10">
+              <div>
+                 <h3 className="text-lg font-bold">Public Share Link</h3>
+                 <p className="text-white/70 text-xs mt-1">Deploy this app to Vercel to get a link you can share with anyone.</p>
+              </div>
+              <button 
+                onClick={handleShare}
+                className="bg-white text-[#075e54] px-6 py-2 rounded-xl font-bold hover:bg-[#25D366] hover:text-white transition-all shadow-md active:scale-95"
+              >
+                Copy My Link
+              </button>
+            </div>
             <ConnectionScreen 
               status={connectionStatus} 
               onConnect={(name) => {

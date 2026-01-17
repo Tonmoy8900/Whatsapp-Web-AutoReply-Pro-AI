@@ -18,12 +18,6 @@
     <meta property="og:description" content="The ultimate professional WhatsApp auto-reply assistant powered by Gemini AI. Automate your customer service with human-like precision.">
     <meta property="og:image" content="https://cdn-icons-png.flaticon.com/512/124/124034.png">
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:title" content="AutoReply Pro AI | Smart WhatsApp Assistant">
-    <meta property="twitter:description" content="Automate your WhatsApp with Gemini AI. Developed by Tonmoy (Bumba).">
-    <meta property="twitter:image" content="https://cdn-icons-png.flaticon.com/512/124/124034.png">
-
     <!-- Theme & Icons -->
     <meta name="theme-color" content="#075e54">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/124/124034.png">
@@ -40,6 +34,13 @@
             background-color: #f0f2f5;
             -webkit-font-smoothing: antialiased;
             overscroll-behavior-y: contain;
+            margin: 0;
+            padding: 0;
+        }
+        #root {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         @keyframes scan {
             0% { top: 0; opacity: 0.5; }
@@ -86,19 +87,27 @@
         }
     </style>
 
-<script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "qrcode.react": "https://esm.sh/qrcode.react@^4.1.0"
-  }
-}
-</script>
+    <script type="importmap">
+    {
+      "imports": {
+        "react/": "https://esm.sh/react@^19.2.3/",
+        "react": "https://esm.sh/react@^19.2.3",
+        "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
+        "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+        "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
+        "qrcode.react": "https://esm.sh/qrcode.react@^4.1.0"
+      }
+    }
+    </script>
+    
+    <!-- Polyfill for process.env used by some libraries -->
+    <script>
+        window.process = window.process || { env: {} };
+    </script>
 </head>
 <body>
     <div id="root"></div>
+    <!-- Entry point for the application -->
+    <script type="module" src="index.tsx"></script>
 </body>
 </html>
