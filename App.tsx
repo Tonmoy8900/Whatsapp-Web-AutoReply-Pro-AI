@@ -105,7 +105,6 @@ const App: React.FC = () => {
   };
 
   const simulateIncomingMessage = async () => {
-    // Can simulate if linked via web OR if Cloud API is enabled
     if (connectionStatus === 'disconnected' && !wsConfig.isEnabled) return;
 
     const scenarios = [
@@ -272,6 +271,7 @@ const App: React.FC = () => {
               setShowQR={setShowQR}
               cloudConfig={wsConfig}
               onCloudUpdate={(newVal) => setWsConfig({ ...wsConfig, ...newVal })}
+              setStatus={setConnectionStatus}
             />
           </div>
         )}

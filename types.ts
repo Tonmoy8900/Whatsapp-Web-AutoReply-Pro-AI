@@ -30,7 +30,7 @@ export interface SavedReply {
   config: GeneratorConfig;
 }
 
-export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'api_active';
+export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'api_active' | 'failed' | 'expired';
 
 export interface LinkedDevice {
   id: string;
