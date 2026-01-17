@@ -13,7 +13,6 @@ const App: React.FC = () => {
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [isSimulating, setIsSimulating] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
-  const [isApiKeyMissing, setIsApiKeyMissing] = useState(false);
 
   const [wsConfig, setWsConfig] = useState<WhatsAppCloudConfig>({
     accessToken: '',
@@ -36,12 +35,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const key = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
-    if (!key) {
-      setIsApiKeyMissing(true);
-    } else {
-      handleGenerate();
-    }
+    handleGenerate();
   }, []);
 
   const handleGenerate = async () => {
@@ -51,11 +45,7 @@ const App: React.FC = () => {
       const result = await generateWhatsAppReply(config);
       setGeneratedMessage(result);
     } catch (err: any) {
-      if (err.message === 'API_KEY_MISSING') {
-        setIsApiKeyMissing(true);
-      } else {
-        setError(err.message);
-      }
+      setError(err.message);
     } finally {
       setIsGenerating(false);
     }
@@ -147,48 +137,6 @@ const App: React.FC = () => {
     }
     return () => clearInterval(interval);
   }, [isSimulating, connectionStatus, config, wsConfig.isEnabled]);
-
-  if (isApiKeyMissing) {
-    return (
-      <div className="min-h-screen bg-[#f0f2f5] flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden animate-fade-in border border-gray-100">
-          <div className="bg-[#075e54] p-8 text-white text-center">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-            </div>
-            <h2 className="text-2xl font-black tracking-tight">Setup Required</h2>
-            <p className="text-white/70 text-sm mt-2">To start the AI Engine, you must connect your Gemini API Key.</p>
-          </div>
-          <div className="p-8 space-y-6">
-            <div className="space-y-4">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                <span className="w-6 h-6 bg-green-100 text-[#075e54] rounded-full flex items-center justify-center text-xs">1</span>
-                Deploy to Cloud
-              </h3>
-              <p className="text-xs text-gray-500 pl-8 leading-relaxed">Ensure you have pushed this code to GitHub and connected it to Vercel.</p>
-            </div>
-            <div className="space-y-4">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                <span className="w-6 h-6 bg-green-100 text-[#075e54] rounded-full flex items-center justify-center text-xs">2</span>
-                Environment Variables
-              </h3>
-              <p className="text-xs text-gray-500 pl-8 leading-relaxed">In your Project Dashboard, add:</p>
-              <div className="ml-8 bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center justify-between group">
-                <code className="text-[11px] font-black text-gray-700">API_KEY = "YOUR_KEY"</code>
-                <button onClick={() => { navigator.clipboard.writeText('API_KEY'); alert('Copied!'); }} className="text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
-              </div>
-            </div>
-            <button 
-              onClick={() => window.location.reload()}
-              className="w-full bg-[#128c7e] text-white py-4 rounded-2xl font-black text-sm shadow-xl hover:bg-[#075e54] transition-all active:scale-95 mt-4"
-            >
-              Refresh Application
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#f0f2f5] flex flex-col font-sans selection:bg-[#25D366]/30">

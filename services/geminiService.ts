@@ -2,28 +2,14 @@
 import { GoogleGenAI } from "@google/genai";
 import { GeneratorConfig, ReplyType } from "../types.ts";
 
-const getAIInstance = () => {
-  // Safe access to process.env
-  const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
-  
-  if (!apiKey || apiKey === "UNDEFINED" || apiKey === "") {
-    throw new Error("API_KEY_MISSING");
-  }
-  return new GoogleGenAI({ apiKey });
-};
-
 /**
  * Custom error handler to return user-friendly messages
  */
 const handleGeminiError = (error: any): string => {
   console.error("Gemini API Error Detail:", error);
-  
   const msg = error.message || "";
-  if (msg === "API_KEY_MISSING") {
-    return "API_KEY_MISSING";
-  }
-  
   const lowerMsg = msg.toLowerCase();
+  
   if (lowerMsg.includes("api key not valid") || lowerMsg.includes("invalid api key")) {
     return "The AI service key is invalid. Please check your configuration.";
   }
@@ -45,7 +31,7 @@ const handleGeminiError = (error: any): string => {
  */
 export const generateWhatsAppReply = async (config: GeneratorConfig): Promise<string> => {
   try {
-    const ai = getAIInstance();
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const systemInstruction = `
       Act as a professional WhatsApp auto-reply assistant for a company named "${config.companyName}".
       Generate a generic greeting template that confirms receipt of a message.
@@ -63,9 +49,7 @@ export const generateWhatsAppReply = async (config: GeneratorConfig): Promise<st
     
     return response.text || "Hello! We've received your message and will get back to you soon.";
   } catch (error) {
-    const handledMsg = handleGeminiError(error);
-    if (handledMsg === "API_KEY_MISSING") throw new Error("API_KEY_MISSING");
-    throw new Error(handledMsg);
+    throw new Error(handleGeminiError(error));
   }
 };
 
@@ -74,7 +58,7 @@ export const generateWhatsAppReply = async (config: GeneratorConfig): Promise<st
  */
 export const generateDynamicWhatsAppReply = async (incomingMessage: string, config: GeneratorConfig): Promise<string> => {
   try {
-    const ai = getAIInstance();
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const systemInstruction = `
       You are a high-end AI Assistant for "${config.companyName}".
       
@@ -103,8 +87,6 @@ export const generateDynamicWhatsAppReply = async (incomingMessage: string, conf
 
     return response.text || "I've noted your specific question. Our team will review this and get back to you during our standard business hours.";
   } catch (error) {
-    const handled = handleGeminiError(error);
-    if (handled === "API_KEY_MISSING") return "Error: Gemini API Key is missing. Connect it in settings.";
-    return handled;
+    return handleGeminiError(error);
   }
 };
