@@ -27,180 +27,157 @@ const ConnectionScreen: React.FC<ConnectionScreenProps> = ({
   setStatus
 }) => {
   const [activeMode, setActiveMode] = useState<'web' | 'cloud'>(cloudConfig.isEnabled ? 'cloud' : 'web');
-  const [qrValue, setQrValue] = useState(`DEMO_MODE_${Math.random().toString(36).substr(2, 10)}`);
+  const [qrValue, setQrValue] = useState(`DEMO_PURPOSES_ONLY_${Math.random().toString(36).substr(2, 10)}`);
   const [loadingStep, setLoadingStep] = useState('');
-  const [showHelp, setShowHelp] = useState(false);
   
   const rotationInterval = useRef<any>(null);
 
   useEffect(() => {
     if (status === 'disconnected' && activeMode === 'web') {
       rotationInterval.current = setInterval(() => {
-        setQrValue(`DEMO_MODE_${Math.random().toString(36).substr(2, 10)}`);
-      }, 20000);
+        setQrValue(`DEMO_PURPOSES_ONLY_${Math.random().toString(36).substr(2, 10)}`);
+      }, 15000);
     }
     return () => clearInterval(rotationInterval.current);
   }, [status, activeMode]);
 
-  useEffect(() => {
-    if (status === 'connecting') {
-      const steps = ["Securing Tunnel...", "Generating Demo Key...", "Syncing UI State..."];
-      let currentStep = 0;
-      const stepInterval = setInterval(() => {
-        if (currentStep < steps.length) {
-          setLoadingStep(steps[currentStep]);
-          currentStep++;
-        }
-      }, 800);
-      const finishTimeout = setTimeout(() => {
-        clearInterval(stepInterval);
-        onConnect("Simulated-Device-01");
-        setStatus('connected');
-      }, 3000);
-      return () => { clearInterval(stepInterval); clearTimeout(finishTimeout); };
-    }
-  }, [status, onConnect, setStatus]);
+  const handleBypass = () => {
+    setStatus('connecting');
+    setLoadingStep("Starting AI Practice Mode...");
+    setTimeout(() => {
+      onConnect("Demo-User");
+      setStatus('connected');
+    }, 2000);
+  };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-fade-in pb-20 px-4">
-      {/* Tab Selector */}
-      <div className="flex bg-white p-1.5 rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-        <button 
-          onClick={() => { setActiveMode('web'); onCloudUpdate({ isEnabled: false }); }}
-          className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${activeMode === 'web' ? 'bg-[#008069] text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
-        >
-          Demo Simulator
-        </button>
-        <button 
-          onClick={() => { setActiveMode('cloud'); onCloudUpdate({ isEnabled: true }); }}
-          className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${activeMode === 'cloud' ? 'bg-[#008069] text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
-        >
-          Real Connection (Cloud API)
-        </button>
+    <div className="max-w-5xl mx-auto space-y-8 animate-fade-in pb-20 px-4">
+      {/* Header Explanation */}
+      <div className="text-center space-y-3 pt-6">
+        <h2 className="text-3xl font-black text-gray-800">Choose Your Connection</h2>
+        <p className="text-gray-500 text-sm max-w-xl mx-auto">Do you want to practice with the AI, or are you ready to reply to real people?</p>
       </div>
 
-      {activeMode === 'cloud' ? (
-        <div className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-sm border border-gray-100 animate-fade-in">
-           <div className="max-w-2xl mx-auto space-y-8">
-              <div className="flex items-center gap-4 p-4 bg-blue-50 border border-blue-100 rounded-2xl">
-                <span className="text-2xl">⚡</span>
-                <p className="text-xs text-blue-800 font-medium leading-relaxed">
-                  <b>Production Mode:</b> Use the official WhatsApp Cloud API to connect your real business phone number. This works 24/7 without needing your phone to be online.
-                </p>
-              </div>
-              
-              <div className="space-y-5">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Meta Access Token</label>
-                  <input 
-                    type="password" 
-                    placeholder="EAAB..." 
-                    value={cloudConfig.accessToken}
-                    onChange={(e) => onCloudUpdate({ accessToken: e.target.value })}
-                    className="w-full bg-gray-50 border border-gray-100 p-4 rounded-2xl text-sm font-mono focus:outline-none focus:border-[#008069]" 
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Phone Number ID</label>
-                    <input 
-                      type="text" 
-                      placeholder="104523..." 
-                      value={cloudConfig.phoneNumberId}
-                      onChange={(e) => onCloudUpdate({ phoneNumberId: e.target.value })}
-                      className="w-full bg-gray-50 border border-gray-100 p-4 rounded-2xl text-sm focus:outline-none focus:border-[#008069]" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">WABA ID</label>
-                    <input 
-                      type="text" 
-                      placeholder="928374..." 
-                      value={cloudConfig.wabaId}
-                      onChange={(e) => onCloudUpdate({ wabaId: e.target.value })}
-                      className="w-full bg-gray-50 border border-gray-100 p-4 rounded-2xl text-sm focus:outline-none focus:border-[#008069]" 
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <p className="text-center text-[10px] text-gray-400 font-medium">
-                Don't have these? Visit <a href="https://developers.facebook.com" className="text-[#008069] underline">Meta for Developers</a> to set up your WhatsApp Business account.
-              </p>
-           </div>
+      {/* Comparison Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Option 1: Simulation */}
+        <div 
+          onClick={() => { setActiveMode('web'); onCloudUpdate({ isEnabled: false }); }}
+          className={`relative p-8 rounded-[3rem] cursor-pointer transition-all border-4 ${activeMode === 'web' ? 'bg-white border-[#008069] shadow-2xl scale-[1.02]' : 'bg-gray-50 border-transparent grayscale opacity-70 hover:grayscale-0 hover:opacity-100'}`}
+        >
+          <div className="flex flex-col items-center text-center space-y-4">
+            <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-3xl">🧪</div>
+            <h3 className="text-xl font-black text-gray-800 uppercase tracking-tighter">1. Practice Mode</h3>
+            <p className="text-xs text-gray-500 font-medium">Use this to see how the AI works. No real messages are sent to anyone.</p>
+            <ul className="text-[11px] text-left w-full space-y-2 font-bold text-gray-400 pt-4">
+              <li className="flex items-center gap-2">✅ No WhatsApp account needed</li>
+              <li className="flex items-center gap-2">✅ Instant setup in 1 second</li>
+              <li className="flex items-center gap-2">❌ Real customers cannot see this</li>
+            </ul>
+          </div>
+          {activeMode === 'web' && <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#008069] text-white px-4 py-1 rounded-full text-[10px] font-black uppercase">Selected</div>}
         </div>
-      ) : (
-        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-          {status === 'connected' ? (
-            <div className="p-12 text-center animate-fade-in">
-              <div className="w-20 h-20 bg-[#e7f3f2] rounded-full flex items-center justify-center text-4xl mx-auto mb-6">✅</div>
-              <h3 className="text-2xl font-black text-gray-800 tracking-tight">Simulator Online</h3>
-              <p className="text-gray-400 text-sm mt-2 max-w-sm mx-auto">The AI engine is now active in "Demo Mode". You can trigger simulated messages in the Live Monitor tab.</p>
-              <button onClick={() => setStatus('disconnected')} className="mt-8 bg-gray-50 text-gray-500 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-gray-100 transition-all">Disconnect Simulator</button>
-            </div>
-          ) : (
-            <div className="p-8 md:p-16 flex flex-col items-center">
-              {/* Troubleshooter Info */}
-              <div className="mb-12 p-5 bg-red-50 border border-red-100 rounded-[2rem] max-w-2xl w-full">
-                <div className="flex gap-4 items-start">
-                  <span className="text-2xl">🚫</span>
-                  <div>
-                    <h4 className="text-sm font-black text-red-800 uppercase tracking-tight mb-1">Why is my phone showing "Invalid QR Code"?</h4>
-                    <p className="text-[11px] text-red-700 leading-relaxed mb-3">
-                      This app is a <b>Frontend Prototype</b>. To connect a real phone, you need a backend server (Node.js/Python) to handle the complex WhatsApp encryption. 
-                    </p>
-                    <div className="flex gap-2">
-                      <button onClick={() => setActiveMode('cloud')} className="bg-red-600 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest">Switch to Real Mode</button>
-                      <button onClick={() => setShowHelp(!showHelp)} className="bg-white text-red-600 border border-red-200 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest">Learn More</button>
-                    </div>
-                  </div>
-                </div>
-                {showHelp && (
-                  <div className="mt-4 pt-4 border-t border-red-100 text-[10px] text-red-800 space-y-2 animate-fade-in">
-                    <p>• <b>Demo Mode:</b> Used to test the AI reply logic visually.</p>
-                    <p>• <b>Production Mode:</b> Uses the <i>Cloud API</i> to actually send/receive messages on a real phone.</p>
-                  </div>
-                )}
+
+        {/* Option 2: Real Customers */}
+        <div 
+          onClick={() => { setActiveMode('cloud'); onCloudUpdate({ isEnabled: true }); }}
+          className={`relative p-8 rounded-[3rem] cursor-pointer transition-all border-4 ${activeMode === 'cloud' ? 'bg-white border-blue-600 shadow-2xl scale-[1.02]' : 'bg-gray-50 border-transparent grayscale opacity-70 hover:grayscale-0 hover:opacity-100'}`}
+        >
+          <div className="flex flex-col items-center text-center space-y-4">
+            <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center text-3xl">🚀</div>
+            <h3 className="text-xl font-black text-gray-800 uppercase tracking-tighter">2. Real Customers</h3>
+            <p className="text-xs text-gray-500 font-medium">Use this for your business. The AI will reply to people on your real phone number.</p>
+            <ul className="text-[11px] text-left w-full space-y-2 font-bold text-gray-400 pt-4">
+              <li className="flex items-center gap-2">✅ AI replies to anyone who texts you</li>
+              <li className="flex items-center gap-2">✅ Professional & Official (Meta)</li>
+              <li className="flex items-center gap-2">❌ Requires Meta Setup (5 mins)</li>
+            </ul>
+          </div>
+          {activeMode === 'cloud' && <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase">Selected</div>}
+        </div>
+      </div>
+
+      {/* Action Area */}
+      <div className="bg-white rounded-[3.5rem] p-8 md:p-12 shadow-sm border border-gray-100 animate-fade-in">
+        {activeMode === 'web' ? (
+          <div className="flex flex-col items-center gap-10">
+            {status === 'connected' ? (
+              <div className="text-center py-10 space-y-6">
+                 <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center text-4xl mx-auto border-2 border-green-100 animate-bounce">⚡</div>
+                 <h4 className="text-2xl font-black text-gray-800">Practice Mode is LIVE</h4>
+                 <p className="text-sm text-gray-400">Go to the <b>Live Engine</b> tab to see the AI auto-reply to fake messages.</p>
+                 <button onClick={() => setStatus('disconnected')} className="text-red-500 font-bold text-xs uppercase tracking-widest border-b border-red-200">Reset Practice</button>
               </div>
-
-              <div className="flex flex-col md:flex-row gap-16 items-center w-full justify-center">
-                <div className="max-w-xs space-y-6 text-center md:text-left">
-                  <h3 className="text-3xl font-black text-gray-800 tracking-tight">Test Simulator</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">Link this demo session to see how the AI handles your customized "Professional" auto-reply rules.</p>
-                </div>
-
+            ) : (
+              <>
                 <div className="relative group">
-                  <div className={`relative p-10 bg-white rounded-[3.5rem] shadow-2xl border border-gray-100 transition-all ${status === 'connecting' ? 'opacity-20 blur-xl' : ''}`}>
-                    <div className="scan-line"></div>
-                    <QRCodeSVG value={qrValue} size={200} />
-                    <div className="absolute inset-0 flex items-center justify-center rotate-12 pointer-events-none opacity-10">
-                       <span className="text-4xl font-black text-gray-300">DEMO ONLY</span>
+                  <div className="opacity-10 blur-md pointer-events-none">
+                    <QRCodeSVG value={qrValue} size={180} />
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-red-600 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl -rotate-12 border-4 border-white">
+                      Not Scannable
                     </div>
                   </div>
-
-                  {status === 'connecting' && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center animate-fade-in">
-                       <div className="w-12 h-12 border-4 border-[#008069] border-t-transparent rounded-full animate-spin mb-4"></div>
-                       <p className="text-[10px] font-black text-[#008069] uppercase tracking-widest">{loadingStep}</p>
-                    </div>
-                  )}
                 </div>
-              </div>
+                <div className="text-center max-w-sm space-y-6">
+                  <h4 className="text-xl font-black text-gray-800 leading-tight">Practice mode does not need your phone!</h4>
+                  <button 
+                    onClick={handleBypass}
+                    className="w-full bg-[#008069] text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-3 active:scale-95"
+                  >
+                    <span>🚀</span> START PRACTICE NOW
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col md:flex-row gap-12 items-start">
+             <div className="flex-1 space-y-8">
+                <div className="space-y-2">
+                  <h4 className="text-2xl font-black text-gray-800">Link Your Real Number</h4>
+                  <p className="text-sm text-gray-500 leading-relaxed">To talk to <b>Real Customers</b>, copy your credentials from your Meta Developer Dashboard into the boxes below.</p>
+                </div>
 
-              <div className="mt-16 text-center">
-                <button 
-                  onClick={() => setStatus('connecting')} 
-                  className="bg-[#008069] text-white px-12 py-5 rounded-[1.8rem] font-black text-sm shadow-2xl hover:bg-[#075e54] transition-all flex items-center gap-3 animate-pulse"
-                >
-                  <span className="text-xl">📱</span>
-                  ACTIVATE SIMULATOR
-                </button>
-                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-4">Safe & Encrypted Environment</p>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+                <div className="space-y-4">
+                   <div className="space-y-1">
+                     <p className="text-[10px] font-black text-gray-400 uppercase ml-4">Permanent Token</p>
+                     <input type="password" placeholder="e.g. EAAG..." className="w-full bg-gray-50 border border-gray-100 p-4 rounded-2xl text-xs font-mono" />
+                   </div>
+                   <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-1">
+                        <p className="text-[10px] font-black text-gray-400 uppercase ml-4">Phone ID</p>
+                        <input type="text" placeholder="10594..." className="w-full bg-gray-50 border border-gray-100 p-4 rounded-2xl text-xs" />
+                     </div>
+                     <div className="space-y-1">
+                        <p className="text-[10px] font-black text-gray-400 uppercase ml-4">WABA ID</p>
+                        <input type="text" placeholder="28391..." className="w-full bg-gray-50 border border-gray-100 p-4 rounded-2xl text-xs" />
+                     </div>
+                   </div>
+                   <button onClick={() => alert("This demo saves logic. To connect real customers, a backend server is required.")} className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl hover:bg-blue-700 transition-all">Save & Start Serving Customers</button>
+                </div>
+             </div>
+
+             <div className="w-full md:w-72 bg-blue-50/50 p-8 rounded-[2.5rem] border border-blue-100 space-y-6">
+                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Where to get keys?</p>
+                <div className="space-y-4">
+                  {[
+                    "1. Go to developers.facebook.com",
+                    "2. Create a Business App",
+                    "3. Add 'WhatsApp' product",
+                    "4. Copy Token & IDs from Dashboard"
+                  ].map((step, i) => (
+                    <p key={i} className="text-[11px] font-bold text-blue-800/70">{step}</p>
+                  ))}
+                </div>
+                <div className="pt-4">
+                  <a href="https://developers.facebook.com" target="_blank" className="text-[10px] font-black text-blue-600 underline">OPEN META DASHBOARD ↗</a>
+                </div>
+             </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
