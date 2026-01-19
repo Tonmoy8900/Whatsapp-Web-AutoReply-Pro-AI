@@ -16,38 +16,38 @@ const handleGeminiError = (error: any): string => {
   if (lowerMsg.includes("quota") || lowerMsg.includes("429")) {
     return "The AI is currently receiving too many requests. Please wait a moment and try again.";
   }
-  if (lowerMsg.includes("safety") || lowerMsg.includes("blocked")) {
-    return "The message was flagged by the safety filter. Try rephrasing your input.";
-  }
-  if (lowerMsg.includes("network") || lowerMsg.includes("fetch")) {
-    return "Network connection issue. Please check your internet and try again.";
-  }
   
-  return "An unexpected error occurred while communicating with the AI. Please try again.";
+  return "An unexpected error occurred. Please try again.";
 };
 
 /**
- * Generates the initial/default template message
+ * Generates a professional auto-reply based on user's specific prompt requirements
  */
 export const generateWhatsAppReply = async (config: GeneratorConfig): Promise<string> => {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const systemInstruction = `
-      Act as a professional WhatsApp auto-reply assistant for a company named "${config.companyName}".
-      Generate a generic greeting template that confirms receipt of a message.
-      Working Hours: ${config.workingHours} (${config.workingDays}).
-      Context: ${config.context}
-      Tone: ${config.replyType}
-      Output ONLY the message text. No brackets, no placeholders.
+      Act as a professional WhatsApp auto-reply assistant for "${config.companyName}".
+      Generate a polite, clear, and professional auto-reply message for WhatsApp.
+      
+      STRUCTURE (MANDATORY):
+      1. A professional greeting.
+      2. Confirmation that the message has been received successfully.
+      3. Explicitly state working hours: ${config.workingHours} (${config.workingDays}).
+      4. Clear assurance of a reply within those working hours.
+      
+      TONE: Professional, friendly, and respectful. Short and easy to understand. Not robotic.
+      CONTEXT: Sent automatically when outside working hours or team is busy.
+      OUTPUT: Only the WhatsApp message text. No placeholders like [Name].
     `;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: "Generate a professional default auto-reply template based on my company settings.",
+      contents: "Generate my professional WhatsApp auto-reply message.",
       config: { systemInstruction, temperature: 0.7 },
     });
     
-    return response.text || "Hello! We've received your message and will get back to you soon.";
+    return response.text || "Hello,\nThank you for your message. We have received it successfully.\n\nOur working hours are 10:00 AM to 6:00 PM (Monday to Friday).\nWe will get back to you as soon as possible during working hours.\n\nThank you for your patience.";
   } catch (error) {
     throw new Error(handleGeminiError(error));
   }
@@ -60,32 +60,30 @@ export const generateDynamicWhatsAppReply = async (incomingMessage: string, conf
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const systemInstruction = `
-      You are a high-end AI Assistant for "${config.companyName}".
+      You are a professional assistant for "${config.companyName}".
       
-      CORE TASK:
-      1. Analyze the customer's specific question: "${incomingMessage}"
-      2. Provide a helpful, intelligent, and human-like response to that specific question.
-      3. Do NOT just repeat a generic out-of-office message. Answer them!
+      Respond to this specific message: "${incomingMessage}"
       
-      CONSTRAINTS:
-      - Tone: ${config.replyType}.
-      - Working Context: ${config.context}.
-      - Business Hours: ${config.workingHours}, ${config.workingDays}.
-      - If the user asks for pricing, hours, or specific help, address it directly using your company context.
-      - Mention that the main human team will provide further details when they return during ${config.workingHours}.
-      - Keep it under 60 words. No robotic markers like [Insert Here].
+      Follow this structure:
+      1. Professional greeting + confirmation of receipt.
+      2. Brief answer/acknowledgement of their specific question.
+      3. Mention we are currently away/busy.
+      4. State working hours: ${config.workingHours} (${config.workingDays}).
+      5. Assurance of human follow-up.
+      
+      TONE: Professional and respectful.
     `;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Customer Question: "${incomingMessage}"`,
+      contents: `Customer Message: "${incomingMessage}"`,
       config: { 
         systemInstruction,
-        temperature: 0.85 
+        temperature: 0.8 
       },
     });
 
-    return response.text || "I've noted your specific question. Our team will review this and get back to you during our standard business hours.";
+    return response.text || "Hello, thank you for reaching out. We have received your message and will respond shortly.";
   } catch (error) {
     return handleGeminiError(error);
   }
